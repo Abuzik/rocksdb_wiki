@@ -10,12 +10,15 @@ We will describe each of them in turn.
 ## Block cache
 
 Block cache is where RocksDB caches uncompressed data blocks. You can configure block cache's size by setting block_cache property of BlockBasedTableOptions:
-
+```c++
+    #include "rocksdb/table.h"
+    #include "rocksdb/table_properties.h" 
+    .....  
     rocksdb::BlockBasedTableOptions table_options;
     table_options.block_cache = rocksdb::NewLRUCache(1 * 1024 * 1024 * 1024LL);
     rocksdb::Options options;
-    options.table_factory.reset(new rocksdb::BlockBasedTableFactory(table_options));
-
+    options.table_factory.reset(rocksdb::NewBlockBasedTableFactory(table_options));
+``
 If the data block is not found in block cache, RocksDB reads it from file using buffered IO. That means it also uses page cache -- it contains raw compressed blocks. In a way, RocksDB's cache is two-tiered: block cache and page cache. Unintuitively, decreasing block cache size will not increase IO. The memory saved will likely be used for page cache, so even more data will be cached. However, CPU usage might grow because RocksDB needs to decompress pages it reads from page cache.
 
 To learn how much memory is block cache using, you can call a function GetUsage() on block cache object:
